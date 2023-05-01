@@ -206,6 +206,7 @@ def Export(self,context,export_path,texture_resolution,device,material,export_it
         metallic_socket = shader_node.inputs['Metallic']
         emission_socket = shader_node.inputs['Emission']
         is_emission_socket_linked = False
+        is_bw_node_exist = False
         emission_color_value = [0.0, 0.0, 0.0, 1.0]
         for i in range(0,4):
             emission_color_value[i] = emission_socket.default_value[i]
@@ -217,13 +218,21 @@ def Export(self,context,export_path,texture_resolution,device,material,export_it
             metallic_value = metallic_socket.default_value
             emission_socket.default_value = [metallic_value,metallic_value,metallic_value,1.0]
         else:
+            is_bw_node_exist = True
             last_socket = metallic_socket.links[0].from_socket
-            mat.node_tree.links.new(last_socket,emission_socket)
+            bw_node = nodes.new('ShaderNodeRGBToBW')
+            bw_node.name = 'RGB_to_BW_Node'
+            bw_node_input_socket = bw_node.inputs['Color']
+            bw_node_output_socket = bw_node.outputs['Val']
+            mat.node_tree.links.new(last_socket,bw_node_input_socket)
+            mat.node_tree.links.new(bw_node_output_socket,emission_socket)
         bpy.ops.object.bake(type='EMIT',save_mode='EXTERNAL',width=texture_resolution,height=texture_resolution)
         img.save_render(filepath = export_path + material.name + '\\' + material.name + '_' + str(texture_resolution) + 'x' + str(texture_resolution) +'_Metallic.png')
         #restore nodes
         nodes.remove(texture_node)
         emission_socket.default_value = emission_color_value
+        if is_bw_node_exist:
+            nodes.remove(bw_node)
         if is_emission_socket_linked:
             mat.node_tree.links.new(before_emission_socket,emission_socket)
         else:
@@ -254,6 +263,7 @@ def Export(self,context,export_path,texture_resolution,device,material,export_it
         roughness_socket = shader_node.inputs['Roughness']
         emission_socket = shader_node.inputs['Emission']
         is_emission_socket_linked = False
+        is_bw_node_exist = False
         emission_color_value = [0.0, 0.0, 0.0, 1.0]
         for i in range(0,4):
             emission_color_value[i] = emission_socket.default_value[i]
@@ -265,13 +275,21 @@ def Export(self,context,export_path,texture_resolution,device,material,export_it
             roughness_value = roughness_socket.default_value
             emission_socket.default_value = [roughness_value,roughness_value,roughness_value,1.0]
         else:
+            is_bw_node_exist = True
             last_socket = roughness_socket.links[0].from_socket
-            mat.node_tree.links.new(last_socket,emission_socket)
+            bw_node = nodes.new('ShaderNodeRGBToBW')
+            bw_node.name = 'RGB_to_BW_Node'
+            bw_node_input_socket = bw_node.inputs['Color']
+            bw_node_output_socket = bw_node.outputs['Val']
+            mat.node_tree.links.new(last_socket,bw_node_input_socket)
+            mat.node_tree.links.new(bw_node_output_socket,emission_socket)
         bpy.ops.object.bake(type='EMIT',save_mode='EXTERNAL',width=texture_resolution,height=texture_resolution)
         img.save_render(filepath = export_path + material.name + '\\' + material.name + '_' + str(texture_resolution) + 'x' + str(texture_resolution) +'_Roughness.png')
         #restore nodes
         nodes.remove(texture_node)
         emission_socket.default_value = emission_color_value
+        if is_bw_node_exist:
+            nodes.remove(bw_node)
         if is_emission_socket_linked:
             mat.node_tree.links.new(before_emission_socket,emission_socket)
         else:
