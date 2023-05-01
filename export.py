@@ -1,6 +1,9 @@
 import bpy
 
 def Export(self,context,export_path,texture_resolution,device,material,export_items):
+    #acquire language settings
+    lang = bpy.app.translations.locale
+
     #deselect all objects
     bpy.ops.object.select_all(action='DESELECT')
 
@@ -80,7 +83,10 @@ def Export(self,context,export_path,texture_resolution,device,material,export_it
         bpy.context.scene.render.engine = previous_render_engine
         bpy.ops.object.delete()
         bpy.data.collections.remove(temp_collection)
-        msg = "选择的材质没有材质输出节点！"
+        if lang == 'zh_CN':
+            msg = "选择的材质没有材质输出节点！"
+        else:
+            msg = "Selected material doesn't contain a material output node!"
         self.report({'ERROR'}, msg)
         return {'FINISHED'}
     if count > 1:
@@ -92,7 +98,10 @@ def Export(self,context,export_path,texture_resolution,device,material,export_it
         bpy.context.scene.render.engine = previous_render_engine
         bpy.ops.object.delete()
         bpy.data.collections.remove(temp_collection)
-        msg = "选择的材质包含多余一个材质输出节点！"
+        if lang == 'zh_CN':
+            msg = "选择的材质包含多余一个材质输出节点！"
+        else:
+            msg = "Selected material contain multiple material output nodes!"
         self.report({'ERROR'}, msg)
         return {'FINISHED'}
     material_output_socket = material_output_node.inputs['Surface']
@@ -105,7 +114,10 @@ def Export(self,context,export_path,texture_resolution,device,material,export_it
         bpy.context.scene.render.engine = previous_render_engine
         bpy.ops.object.delete()
         bpy.data.collections.remove(temp_collection)
-        msg = "选择的材质未指定着色器！"
+        if lang == 'zh_CN':
+            msg = "选择的材质未指定着色器！"
+        else:
+            msg = "Selected material doesn't contain a shader!"
         self.report({'ERROR'}, msg)
         return {'FINISHED'}
     shader_node = material_output_socket.links[0].from_node
@@ -118,7 +130,10 @@ def Export(self,context,export_path,texture_resolution,device,material,export_it
         bpy.context.scene.render.engine = previous_render_engine
         bpy.ops.object.delete()
         bpy.data.collections.remove(temp_collection)
-        msg = "仅支持使用原理化着色器的材质！"
+        if lang == 'zh_CN':
+            msg = "仅支持使用原理化着色器的材质！"
+        else:
+            msg = "Only supports the material which uses the Principle shader!"
         self.report({'ERROR'}, msg)
         return {'FINISHED'}
 

@@ -15,6 +15,12 @@ from bpy.types import (Panel,Operator)
 from bpy_extras.io_utils import ImportHelper
 from . import export
 
+lang = ''
+
+def getLanguage():
+    global lang
+    lang = bpy.app.translations.locale
+
 def getMaterialList():
     global _materials
     _materials = []
@@ -24,19 +30,24 @@ def getMaterialList():
             _materials.append((str(i),mat.name+' ',''))
 
 def GenerateProperty():
-    bpy.types.Scene.ExportPath = bpy.props.StringProperty(name="ExportPath", default='')
-    bpy.types.Scene.Materials = bpy.props.EnumProperty(name="Materials", items=lambda self, context: _materials)
-    bpy.types.Scene.BaseColor = bpy.props.BoolProperty(name="BaseColor", default=True)
+    bpy.types.Scene.ExportPath = bpy.props.StringProperty(name="Export Path", default='')
+    bpy.types.Scene.Materials = bpy.props.EnumProperty(name="Material", items=lambda self, context: _materials)
+    bpy.types.Scene.BaseColor = bpy.props.BoolProperty(name="Base Color", default=True)
     bpy.types.Scene.Metallic = bpy.props.BoolProperty(name="Metallic", default=True)
     bpy.types.Scene.Roughness = bpy.props.BoolProperty(name="Roughness", default=True)
     bpy.types.Scene.Normal = bpy.props.BoolProperty(name="Normal", default=True)
     bpy.types.Scene.Resolution = bpy.props.EnumProperty(name="Resolution", items=_resolutions)
-    bpy.types.Scene.RenderDevice = bpy.props.EnumProperty(name="RenderDevice", items=_render_devices)
+    bpy.types.Scene.RenderDevice = bpy.props.EnumProperty(name="Render Device", items=_render_devices)
 
 
 class SelectFolderOperator(bpy.types.Operator, ImportHelper):
+    global lang
+    getLanguage()
     bl_idname = "select.folder"
-    bl_label = "选择输出文件夹"
+    if lang == 'zh_CN':
+        bl_label = "选择输出文件夹"
+    else:
+        bl_label = "Select Export Folder"
     filename_ext = "."
     use_filter_folder = True
     
@@ -61,6 +72,8 @@ class ExportOperator(bpy.types.Operator):
     use_filter_folder = True
     
     def execute(self, context):
+        global lang
+        getLanguage()
         resolution_dic = {
             '256x256' : 256,
             '512x512' : 512,
@@ -71,7 +84,10 @@ class ExportOperator(bpy.types.Operator):
         }
         path = context.scene.ExportPath
         if not os.path.exists(path):
-            msg = "输出路径无效！"
+            if lang == 'zh_CN':
+                msg = "输出路径无效！"
+            else:
+                msg = "Invalid export path!"
             self.report({'ERROR'}, msg)
             return {'FINISHED'}
         if path[-1] != '\\' and path[-1] != '/':
@@ -80,7 +96,10 @@ class ExportOperator(bpy.types.Operator):
         device = context.scene.RenderDevice
         material = context.scene.Materials
         if len(material) == 0:
-                msg = "未选择材质！"
+                if lang == 'zh_CN':
+                    msg = "未选择材质！"
+                else:
+                    msg = "Material not selected!"
                 self.report({'ERROR'}, msg)
                 return {'FINISHED'}
         base_color = context.scene.BaseColor
@@ -88,7 +107,10 @@ class ExportOperator(bpy.types.Operator):
         roughness = context.scene.Roughness
         normal = context.scene.Normal
         if not(base_color) and not(metallic) and not(roughness) and not(normal):
-            msg = "至少选择一个输出类型！"
+            if lang == 'zh_CN':
+                msg = "至少选择一个输出类型！"
+            else:
+                msg = "Select at least one export layer!"
             self.report({'ERROR'}, msg)
             return {'FINISHED'}
         export_items = [base_color,metallic,roughness,normal]
@@ -104,25 +126,56 @@ class MainPanel(bpy.types.Panel):
     bl_category = "PBR Export Tool"
 
     def draw(self, context):
+        global lang
+        getLanguage()
         layout = self.layout
         layout.use_property_decorate = False
         layout.use_property_split = True
         row = layout.row(align=True)
-        row.prop(context.scene, 'ExportPath', text='输出路径')
+
+        if lang == 'zh_CN':
+            row.prop(context.scene, 'ExportPath', text='输出路径')
+        else:
+            row.prop(context.scene, 'ExportPath', text='Export Path')
+
         row.operator(SelectFolderOperator.bl_idname, text="", icon="FILEBROWSER")
         getMaterialList()
-        layout.prop(context.scene, 'Materials', text='选择材质')
-        layout.prop(context.scene, 'RenderDevice', text='烘焙设备')
+        
+        if lang == 'zh_CN':
+            layout.prop(context.scene, 'Materials', text='选择材质')
+        else:
+            layout.prop(context.scene, 'Materials', text='Material')
+
+        if lang == 'zh_CN':
+            layout.prop(context.scene, 'RenderDevice', text='烘焙设备')
+        else:
+            layout.prop(context.scene, 'RenderDevice', text='Render Device')
+
         col_option = layout.column()
-        col_option.label(text="导出选项")
+        
+        if lang == 'zh_CN':
+            col_option.label(text="导出选项")
+        else:
+            col_option.label(text="Export Options")
+
         box = col_option.box()
-        sub_col = box.column(heading='输出类型')
-        sub_col.prop(context.scene, 'BaseColor', text="基础色")
-        sub_col.prop(context.scene, 'Metallic', text="金属度")
-        sub_col.prop(context.scene, 'Roughness', text="粗糙度")
-        sub_col.prop(context.scene, 'Normal', text="法向")
-        box.prop(context.scene, 'Resolution', text='输出分辨率')
-        layout.operator(ExportOperator.bl_idname, text='导出 PBR 贴图')
+
+        if lang == 'zh_CN':
+            sub_col = box.column(heading='输出类型')
+            sub_col.prop(context.scene, 'BaseColor', text="基础色")
+            sub_col.prop(context.scene, 'Metallic', text="金属度")
+            sub_col.prop(context.scene, 'Roughness', text="粗糙度")
+            sub_col.prop(context.scene, 'Normal', text="法向")
+            box.prop(context.scene, 'Resolution', text='输出分辨率')
+            layout.operator(ExportOperator.bl_idname, text='导出 PBR 贴图')
+        else:
+            sub_col = box.column(heading='Export layers')
+            sub_col.prop(context.scene, 'BaseColor', text="Base Color")
+            sub_col.prop(context.scene, 'Metallic', text="Metallic")
+            sub_col.prop(context.scene, 'Roughness', text="Roughness")
+            sub_col.prop(context.scene, 'Normal', text="Normal")
+            box.prop(context.scene, 'Resolution', text='Resolution')
+            layout.operator(ExportOperator.bl_idname, text='Export')
 
 
 _classes = [
@@ -163,4 +216,5 @@ def unregister():
 
 
 if __name__ == "__main__":
+    getLanguage()
     register()
